@@ -1,0 +1,46 @@
+
+!pip install pandas scikit-learn
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.preprocessing import LabelEncoder
+from sklearn.metrics import accuracy_score, classification_report
+from google.colab import files
+
+
+uploaded = files.upload()  
+
+
+df = pd.read_csv("/content/Crop_recommendation.csv")
+print("✅ Dataset loaded successfully")
+print(df.head())
+X = df.drop("label", axis=1)
+y = df["label"]
+le = LabelEncoder()
+y_encoded = le.fit_transform(y)
+
+
+X_train, X_test, y_train, y_test = train_test_split(X, y_encoded, test_size=0.2, random_state=42)
+model = RandomForestClassifier(random_state=42)
+model.fit(X_train, y_train)
+y_pred = model.predict(X_test)
+accuracy = accuracy_score(y_test, y_pred)
+print(f"✅ Model Accuracy: {accuracy*100:.2f}%")
+print("\n📊 Classification Report:\n")
+print(classification_report(y_test, y_pred, target_names=le.classes_))
+
+
+def recommend_crop(N, P, K, temperature, humidity, ph, rainfall):
+    input_data = pd.DataFrame([{
+        'N': N,
+        'P': P,
+        'K': K,
+        'temperature': temperature,
+        'humidity': humidity,
+        'ph': ph,
+        'rainfall': rainfall
+    }])
+    prediction = model.predict(input_data)
+    return le.inverse_transform(prediction)[0]
+predicted_crop = recommend_crop(90, 40, 40, 25.0, 80.0, 6.5, 200.0)
+print(f"\n🌾 Recommended Crop for Input Conditions: {predicted_crop}")
